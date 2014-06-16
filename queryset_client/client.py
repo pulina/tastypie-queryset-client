@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
+from datetime import datetime, date
 import copy
 import decimal
 import slumber
@@ -581,6 +581,13 @@ def model_gen(**configs):
                                 check_type = isinstance(value, datetime)
                             elif field_type == "time":
                                 check_type = True
+                            elif field_type == "date":
+                                if isinstance(value, (str, unicode)):
+                                    try:
+                                        value = datetime.strptime(value, "%Y-%m-%d").date()
+                                    except ValueError:
+                                        pass
+                                check_type = isinstance(value, date)
                             elif field_type == "boolean":
                                 check_type = True
                             if field_type == "related":
@@ -611,6 +618,8 @@ def model_gen(**configs):
                             pass   # input safe
                         elif field_type == "datetime":
                             value = value.isoformat()
+                        elif field_type == "date":
+                            value = str(value)
                         elif field_type == "time":
                             pass
                         elif field_type == "boolean":

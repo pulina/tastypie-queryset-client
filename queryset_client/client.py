@@ -569,6 +569,9 @@ def model_gen(**configs):
                             elif field_type == "float":
                                 if isinstance(value, float):
                                     check_type = True
+                            elif field_type == "list":
+                                if isinstance(value, list):
+                                    check_type = True
                             elif field_type == "decimal":
                                 value = decimal.Decimal(value)
                                 check_type = isinstance(value, decimal.Decimal)
@@ -623,6 +626,8 @@ def model_gen(**configs):
                         elif field_type == "time":
                             pass
                         elif field_type == "boolean":
+                            pass
+                        elif field_type == "list":
                             pass
                         else:
                             pass

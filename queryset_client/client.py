@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime, date
+from dateutil import parser
 import copy
 import decimal
 import slumber
@@ -577,19 +578,13 @@ def model_gen(**configs):
                                 check_type = isinstance(value, decimal.Decimal)
                             elif field_type == "datetime":
                                 if isinstance(value, (str, unicode)):
-                                    try:
-                                        value = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
-                                    except ValueError:
-                                        value = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
+                                    value = parser.parse(value)
                                 check_type = isinstance(value, datetime)
                             elif field_type == "time":
                                 check_type = True
                             elif field_type == "date":
                                 if isinstance(value, (str, unicode)):
-                                    try:
-                                        value = datetime.strptime(value, "%Y-%m-%d").date()
-                                    except ValueError:
-                                        pass
+                                    value = parser.parse(value).date()
                                 check_type = isinstance(value, date)
                             elif field_type == "boolean":
                                 check_type = True

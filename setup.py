@@ -42,7 +42,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     data_files=data_files,
-    install_requires=["slumber", "simplejson", "requests"],
+    install_requires=["slumber", "simplejson", "requests", "python-dateutil"],
     # cmdclass={'test': pytest_test},
     # tests_require=['pytest'],
 )

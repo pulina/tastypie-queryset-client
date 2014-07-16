@@ -1,6 +1,13 @@
 History
 --------
 
+0.7.3 (2013-02-17)
+~~~~~~~~~~~~~~~~~~~~~~
+* Support list field.
+* Support date field.
+* Support dict field.
+* Change access to model from Queryset.model to Queryset._model.
+
 0.7.2 (2013-02-17)
 ~~~~~~~~~~~~~~~~~~~~~~
 * Support decimal field. (In ver py2.7)

@@ -573,6 +573,9 @@ def model_gen(**configs):
                             elif field_type == "list":
                                 if isinstance(value, list):
                                     check_type = True
+                            elif field_type == "dict":
+                                if isinstance(value, dict):
+                                    check_type = True
                             elif field_type == "decimal":
                                 value = decimal.Decimal(value)
                                 check_type = isinstance(value, decimal.Decimal)
@@ -623,6 +626,8 @@ def model_gen(**configs):
                         elif field_type == "boolean":
                             pass
                         elif field_type == "list":
+                            pass
+                        elif field_type == "dict":
                             pass
                         else:
                             pass

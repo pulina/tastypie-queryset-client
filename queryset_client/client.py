@@ -25,7 +25,7 @@ class FieldTypeError(TypeError):
 class QuerySet(object):
 
     def __init__(self, model, responses=None, query=None, **kwargs):
-        self.model = model
+        self._model = model
         self._kwargs = kwargs
         self._query = query or dict()
         self._iteration_num = None
@@ -97,12 +97,12 @@ class QuerySet(object):
         responses = responses or self._responses
         klass = klass or self.__class__
 
-        clone = klass(model=self.model, responses=responses, query=self._query)
+        clone = klass(model=self._model, responses=responses, query=self._query)
         clone.__dict__.update(kwargs)
         return clone
 
     def _request(self, url):
-        return self.model._base_client.request(url)
+        return self._model._base_client.request(url)
 
     def _next(self):
         """ request next page """
@@ -139,13 +139,13 @@ class QuerySet(object):
             raise IndexError(err)
 
     def _get_responses(self, **kwargs):
-        return self.model._client.get(**kwargs)
+        return self._model._client.get(**kwargs)
 
     def _wrap_response(self, dic):
-        return self._response_class(self.model, dic)
+        return self._response_class(self._model, dic)
 
     def get_pk(self, pk):
-        return self._wrap_response(self.model._client(pk).get())
+        return self._wrap_response(self._model._client(pk).get())
 
     def count(self):
         if self._responses:
@@ -166,10 +166,10 @@ class QuerySet(object):
         if num > 1:
             raise MultipleObjectsReturned(
                 "get() returned more than one {0} -- it returned {1}! Lookup parameters were {2}"
-                    .format(self.model._model_name, num, kwargs))
+                    .format(self._model._model_name, num, kwargs))
         elif not num:
             raise ObjectDoesNotExist("{0} matching query does not exist."
-                    .format(self.model._model_name))
+                    .format(self._model._model_name))
         return clone[0]
 
     def create(self, **kwargs):
@@ -179,7 +179,7 @@ class QuerySet(object):
         :rtype: Model
         :return: created object.
         """
-        obj = self.model(**kwargs)
+        obj = self._model(**kwargs)
         obj.save()
         return obj
 
@@ -195,7 +195,7 @@ class QuerySet(object):
         try:
             return self.get(**kwargs), False
         except ObjectDoesNotExist:
-            obj = self.model(**kwargs)
+            obj = self._model(**kwargs)
             obj.save()
             return obj, True
 
@@ -248,10 +248,10 @@ class QuerySet(object):
 class Manager(object):
 
     def __init__(self, model):
-        self.model = model
+        self._model = model
 
     def get_query_set(self):
-        return QuerySet(self.model)
+        return QuerySet(self._model)
 
     def all(self):
         return self.get_query_set()
@@ -350,12 +350,12 @@ class ManyToManyManager(Manager):
         self._instance = instance
 
     def get_query_set(self):
-        return QuerySet(self.model, query=self._query).filter()
+        return QuerySet(self._model, query=self._query).filter()
 
     def filter(self, *args, **kwargs):
         if "id__in" in kwargs:
             raise NotImplementedError("'id__in' does not allowed in ManyToManyManager.")
-        return QuerySet(self.model, query=self._query).filter(*args, **kwargs)
+        return QuerySet(self._model, query=self._query).filter(*args, **kwargs)
 
     def add(self, *objs):
         """
@@ -368,7 +368,7 @@ class ManyToManyManager(Manager):
 
         """
         if objs:
-            resource_models = getattr(self._instance, self.model._model_name)
+            resource_models = getattr(self._instance, self._model._model_name)
             query_ids = self._query.get("id__in", [])
             for obj in objs:
                 resource_uri = getattr(obj, "resource_uri")
@@ -376,7 +376,7 @@ class ManyToManyManager(Manager):
                 resource_models.append(resource_uri)
                 query_ids.append(parse_id(resource_uri))
             self._query.update({"id__in": list(set(query_ids))})
-            setattr(self._instance, self.model._model_name, list(set(resource_models)))
+            setattr(self._instance, self._model._model_name, list(set(resource_models)))
 
     def remove(self, *objs):
         """
@@ -389,7 +389,7 @@ class ManyToManyManager(Manager):
 
         """
         if objs:
-            resource_models = getattr(self._instance, self.model._model_name)
+            resource_models = getattr(self._instance, self._model._model_name)
             query_ids = self._query.get("id__in", [])
             for obj in objs:
                 resource_uri = getattr(obj, "resource_uri")
@@ -397,7 +397,7 @@ class ManyToManyManager(Manager):
                 resource_models.remove(resource_uri)
                 query_ids.remove(parse_id(resource_uri))
             self._query.update({"id__in": list(set(query_ids))})
-            setattr(self._instance, self.model._model_name, list(set(resource_models)))
+            setattr(self._instance, self._model._model_name, list(set(resource_models)))
 
     def clear(self):
         """
@@ -410,7 +410,7 @@ class ManyToManyManager(Manager):
 
         """
         self._query.update({"id__in": list()})
-        setattr(self._instance, self.model._model_name, list())
+        setattr(self._instance, self._model._model_name, list())
 
 
 def parse_id(resource_uri):
@@ -436,13 +436,13 @@ class Response(object):
         self._to_one_class = kwargs.get("_to_one_class", self.__class__)
         self._url = url
         if url is None:
-            self.model = model(**self.__response)
+            self._model = model(**self.__response)
         else:
-            self.model = model
+            self._model = model
 
     def __repr__(self):
         return "<{0}: {1} {2}>".format(
-            self.model._model_name, self._url or "", self.__response)
+            self._model._model_name, self._url or "", self.__response)
 
     def __getattr__(self, attr):
         """ return Response Class """
@@ -452,17 +452,17 @@ class Response(object):
             return self.__getitem__(attr)
 
         related_type = self._schema["fields"][attr]["related_type"]
-        model = self.model.clone(attr)
+        model = self._model.clone(attr)
         url = self._response[attr]
         if related_type == "to_many":
             return self._to_many_class(model=model,
-                   query={"id__in": [parse_id(u) for u in url]}, instance=self.model)
+                   query={"id__in": [parse_id(u) for u in url]}, instance=self._model)
         elif related_type == "to_one":
             return self._to_one_class(model=model, url=url)
 
     def __getitem__(self, item):
         if item in self._response:
-            return getattr(self.model, item)
+            return getattr(self._model, item)
         else:
             raise KeyError(item)
 
@@ -472,29 +472,29 @@ class Response(object):
         return attr in self._response
 
     def __setattr__(self, attr, value):
-        if "model" in self.__dict__:
+        if "_model" in self.__dict__:
             if hasattr(self, attr):
                 self.__response[attr] = value
-                setattr(self.model, attr, value)
+                setattr(self._model, attr, value)
         super(Response, self).__setattr__(attr, value)
 
     @property
     def _response(self):
-        if "model" in self.__dict__:
+        if "_model" in self.__dict__:
             if not self.__response:
-                client = getattr(self.model._main_client, self.model._model_name)
+                client = getattr(self._model._main_client, self._model._model_name)
                 self.__response = client(parse_id(self._url)).get()
-                self.model = self.model(**self.__response)
+                self._model = self._model(**self.__response)
         return self.__response
 
     def save(self):
         """ save saved response """
-        self.model.save()
-        self.__response = self.model._get_fields()
+        self._model.save()
+        self.__response = self._model._get_fields()
 
     def delete(self):
         """ remove saved response """
-        self.model.delete()
+        self._model.delete()
         self.__response = dict()
 
 

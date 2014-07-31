@@ -609,7 +609,9 @@ def model_gen(**configs):
                 value = self._fields[field]
                 if self._strict_field is True:
                     try:
-                        if field_type == "string":
+                        if not value:
+                            value = None
+                        elif field_type == "string":
                             pass
                         elif field_type == "integer":
                             pass   # input safe

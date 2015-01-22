@@ -593,6 +593,8 @@ def model_gen(**configs):
                                 check_type = True
                             if field_type == "related":
                                 check_type = True
+                            if field_type == "dict":
+                                check_type = True
                         except Exception, err:
                             check_type = False
                         finally:
@@ -618,7 +620,7 @@ def model_gen(**configs):
                         elif field_type == "float":
                             pass   # input safe
                         elif field_type == "decimal":
-                            value = unicode(value)
+                            pass   # input safe
                         elif field_type == "datetime":
                             value = value.isoformat()
                         elif field_type == "date":

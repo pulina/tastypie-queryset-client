@@ -618,7 +618,7 @@ def model_gen(**configs):
                         elif field_type == "float":
                             pass   # input safe
                         elif field_type == "decimal":
-                            pass   # input safe
+                            value = unicode(value)
                         elif field_type == "datetime":
                             value = value.isoformat()
                         elif field_type == "date":
